@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Settings · SilentBridge</title>
+    <meta name="description" content="Configure camera, language, accessibility, notifications, and API endpoints." />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/assets/css/style.css" />
+  </head>
+  <body>
+    <div data-sb-nav></div>
+
+    <main class="container-sb py-5">
+      <header class="mb-5" data-sb-reveal>
+        <div class="text-muted-2 small">Preferences</div>
+        <h1 class="h2 mb-0">Settings</h1>
+      </header>
+
+      <div class="row g-4">
+        <!-- Camera -->
+        <div class="col-lg-6" data-sb-reveal>
+          <div class="sb-card h-100">
+            <div class="card-body p-4">
+              <div class="d-flex align-items-center gap-3 mb-3">
+                <span class="sb-icon-tile"><i class="bi bi-camera-video"></i></span>
+                <div>
+                  <h2 class="h6 mb-0">Camera</h2>
+                  <div class="text-muted-2 small">Choose the input device and resolution.</div>
+                </div>
+              </div>
+              <div class="mb-3">
+                <label for="camDevice" class="form-label small text-muted-2">Device</label>
+                <select id="camDevice" class="form-select">
+                  <option>FaceTime HD Camera</option>
+                  <option>External Logitech C920</option>
+                </select>
+              </div>
+              <div class="mb-3">
+                <label for="camRes" class="form-label small text-muted-2">Resolution</label>
+                <select id="camRes" class="form-select">
+                  <option>1280 × 720 · 30 fps (recommended)</option>
+                  <option>1920 × 1080 · 30 fps</option>
+                  <option>640 × 480 · 60 fps</option>
+                </select>
+              </div>
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="mirrorCam" checked />
+                <label class="form-check-label" for="mirrorCam">Mirror preview</label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Language -->
+        <div class="col-lg-6" data-sb-reveal>
+          <div class="sb-card h-100">
+            <div class="card-body p-4">
+              <div class="d-flex align-items-center gap-3 mb-3">
+                <span class="sb-icon-tile accent"><i class="bi bi-translate"></i></span>
+                <div>
+                  <h2 class="h6 mb-0">Language</h2>
+                  <div class="text-muted-2 small">Input signing variant and caption output.</div>
+                </div>
+              </div>
+              <div class="mb-3">
+                <label for="signLang" class="form-label small text-muted-2">Sign language</label>
+                <select id="signLang" class="form-select">
+                  <option>Indian Sign Language (ISL)</option>
+                  <option>American Sign Language (ASL) — beta</option>
+                </select>
+              </div>
+              <div class="mb-3">
+                <label for="captionLang" class="form-label small text-muted-2">Caption language</label>
+                <select id="captionLang" class="form-select">
+                  <option>English</option>
+                  <option>Hindi</option>
+                  <option>Tamil</option>
+                  <option>Bengali</option>
+                </select>
+              </div>
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="autoDetect" />
+                <label class="form-check-label" for="autoDetect">Auto-detect regional variation</label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Accessibility -->
+        <div class="col-lg-6" data-sb-reveal>
+          <div class="sb-card h-100">
+            <div class="card-body p-4">
+              <div class="d-flex align-items-center gap-3 mb-3">
+                <span class="sb-icon-tile warn"><i class="bi bi-universal-access"></i></span>
+                <div>
+                  <h2 class="h6 mb-0">Accessibility</h2>
+                  <div class="text-muted-2 small">Contrast, motion, and caption sizing.</div>
+                </div>
+              </div>
+              <div class="mb-3">
+                <label for="capSize" class="form-label small text-muted-2">Caption size</label>
+                <select id="capSize" class="form-select">
+                  <option>Comfortable</option>
+                  <option>Large</option>
+                  <option>Extra large</option>
+                </select>
+              </div>
+              <div class="form-check form-switch mb-2">
+                <input class="form-check-input" type="checkbox" id="highContrast" />
+                <label class="form-check-label" for="highContrast">High contrast captions</label>
+              </div>
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="reduceMotion" />
+                <label class="form-check-label" for="reduceMotion">Reduce motion</label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Notifications -->
+        <div class="col-lg-6" data-sb-reveal>
+          <div class="sb-card h-100">
+            <div class="card-body p-4">
+              <div class="d-flex align-items-center gap-3 mb-3">
+                <span class="sb-icon-tile"><i class="bi bi-bell"></i></span>
+                <div>
+                  <h2 class="h6 mb-0">Notifications</h2>
+                  <div class="text-muted-2 small">Choose what you'd like to hear about.</div>
+                </div>
+              </div>
+              <div class="form-check form-switch mb-2">
+                <input class="form-check-input" type="checkbox" id="notifCalib" checked />
+                <label class="form-check-label" for="notifCalib">Calibration completes</label>
+              </div>
+              <div class="form-check form-switch mb-2">
+                <input class="form-check-input" type="checkbox" id="notifModel" checked />
+                <label class="form-check-label" for="notifModel">Model updates available</label>
+              </div>
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="notifWeekly" />
+                <label class="form-check-label" for="notifWeekly">Weekly usage summary</label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- API endpoint -->
+        <div class="col-lg-6" data-sb-reveal>
+          <div class="sb-card h-100">
+            <div class="card-body p-4">
+              <div class="d-flex align-items-center gap-3 mb-3">
+                <span class="sb-icon-tile"><i class="bi bi-cloud"></i></span>
+                <div>
+                  <h2 class="h6 mb-0">API endpoint</h2>
+                  <div class="text-muted-2 small">Advanced: point the client at a custom inference server.</div>
+                </div>
+              </div>
+              <div class="mb-3">
+                <label for="apiUrl" class="form-label small text-muted-2">Endpoint URL</label>
+                <input id="apiUrl" type="url" class="form-control" value="https://api.silentbridge.ai/v2" />
+              </div>
+              <div class="mb-3">
+                <label for="apiKey" class="form-label small text-muted-2">API key</label>
+                <input id="apiKey" type="password" class="form-control" value="sb_live_••••••••••••" />
+              </div>
+              <button class="btn btn-primary-sb btn-ripple">Save endpoint</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- About -->
+        <div class="col-lg-6" data-sb-reveal>
+          <div class="sb-card h-100">
+            <div class="card-body p-4">
+              <div class="d-flex align-items-center gap-3 mb-3">
+                <span class="sb-icon-tile accent"><i class="bi bi-info-circle"></i></span>
+                <div>
+                  <h2 class="h6 mb-0">About SilentBridge</h2>
+                  <div class="text-muted-2 small">Version, credits, and licenses.</div>
+                </div>
+              </div>
+              <dl class="row mb-3">
+                <dt class="col-5 text-muted-2 fw-normal small">App version</dt>
+                <dd class="col-7 mb-2">2.4.1</dd>
+                <dt class="col-5 text-muted-2 fw-normal small">Model version</dt>
+                <dd class="col-7 mb-2">SB-ISL v2.4 (Jun 2026)</dd>
+                <dt class="col-5 text-muted-2 fw-normal small">Runtime</dt>
+                <dd class="col-7 mb-0">WebGPU · on-device</dd>
+              </dl>
+              <a href="#" class="small">Open source acknowledgements</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <div data-sb-footer></div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/assets/js/config.js"></script>
+    <script src="/assets/js/app.js"></script>
+  </body>
+</html>

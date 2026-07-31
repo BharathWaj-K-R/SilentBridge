@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Users · SilentBridge</title>
+    <meta name="description" content="Manage signer profiles and personalized model adapters." />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/assets/css/style.css" />
+  </head>
+  <body>
+    <div data-sb-nav></div>
+
+    <main class="container-sb py-5">
+      <header class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4" data-sb-reveal>
+        <div>
+          <div class="text-muted-2 small">People</div>
+          <h1 class="h2 mb-1">Signer profiles</h1>
+          <p class="text-muted-2 mb-0">Each profile stores a personal adapter — swap between them instantly.</p>
+        </div>
+        <div class="d-flex gap-2">
+          <button class="btn btn-ghost-sb btn-icon"><i class="bi bi-arrow-down-up"></i> Sort</button>
+          <button class="btn btn-primary-sb btn-icon btn-ripple"><i class="bi bi-plus-lg"></i> Add profile</button>
+        </div>
+      </header>
+
+      <div class="row g-4">
+        <!-- Card -->
+        <div class="col-md-6 col-lg-4" data-sb-reveal>
+          <article class="sb-card sb-card-lift h-100">
+            <div class="card-body">
+              <div class="d-flex align-items-center gap-3">
+                <div class="sb-avatar">AR</div>
+                <div>
+                  <h3 class="h6 mb-0">Aarav Rao</h3>
+                  <div class="text-muted-2 small">Calibrated 12 Jun 2026</div>
+                </div>
+                <span class="sb-badge success ms-auto">Active</span>
+              </div>
+              <div class="mt-4">
+                <div class="d-flex justify-content-between small mb-1"><span>Accuracy</span><span>94%</span></div>
+                <div class="progress"><div class="progress-bar" style="width: 94%"></div></div>
+              </div>
+              <div class="d-flex gap-2 mt-4">
+                <button class="btn btn-primary-sb btn-sm flex-fill">Load</button>
+                <button class="btn btn-ghost-sb btn-sm">Retrain</button>
+                <button class="btn btn-ghost-sb btn-sm" aria-label="Delete profile"><i class="bi bi-trash text-muted-2"></i></button>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <div class="col-md-6 col-lg-4" data-sb-reveal>
+          <article class="sb-card sb-card-lift h-100">
+            <div class="card-body">
+              <div class="d-flex align-items-center gap-3">
+                <div class="sb-avatar">MS</div>
+                <div>
+                  <h3 class="h6 mb-0">Meera Shah</h3>
+                  <div class="text-muted-2 small">Calibrated 08 Jun 2026</div>
+                </div>
+              </div>
+              <div class="mt-4">
+                <div class="d-flex justify-content-between small mb-1"><span>Accuracy</span><span>91%</span></div>
+                <div class="progress"><div class="progress-bar" style="width: 91%"></div></div>
+              </div>
+              <div class="d-flex gap-2 mt-4">
+                <button class="btn btn-primary-sb btn-sm flex-fill">Load</button>
+                <button class="btn btn-ghost-sb btn-sm">Retrain</button>
+                <button class="btn btn-ghost-sb btn-sm" aria-label="Delete profile"><i class="bi bi-trash text-muted-2"></i></button>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <div class="col-md-6 col-lg-4" data-sb-reveal>
+          <article class="sb-card sb-card-lift h-100">
+            <div class="card-body">
+              <div class="d-flex align-items-center gap-3">
+                <div class="sb-avatar">RK</div>
+                <div>
+                  <h3 class="h6 mb-0">Rahul Krishnan</h3>
+                  <div class="text-muted-2 small">Calibrated 02 Jun 2026</div>
+                </div>
+              </div>
+              <div class="mt-4">
+                <div class="d-flex justify-content-between small mb-1"><span>Accuracy</span><span>96%</span></div>
+                <div class="progress"><div class="progress-bar" style="width: 96%"></div></div>
+              </div>
+              <div class="d-flex gap-2 mt-4">
+                <button class="btn btn-primary-sb btn-sm flex-fill">Load</button>
+                <button class="btn btn-ghost-sb btn-sm">Retrain</button>
+                <button class="btn btn-ghost-sb btn-sm" aria-label="Delete profile"><i class="bi bi-trash text-muted-2"></i></button>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <div class="col-md-6 col-lg-4" data-sb-reveal>
+          <article class="sb-card sb-card-lift h-100">
+            <div class="card-body">
+              <div class="d-flex align-items-center gap-3">
+                <div class="sb-avatar">PT</div>
+                <div>
+                  <h3 class="h6 mb-0">Priya Thomas</h3>
+                  <div class="text-muted-2 small">Calibrated 27 May 2026</div>
+                </div>
+              </div>
+              <div class="mt-4">
+                <div class="d-flex justify-content-between small mb-1"><span>Accuracy</span><span>88%</span></div>
+                <div class="progress"><div class="progress-bar" style="width: 88%"></div></div>
+              </div>
+              <div class="d-flex gap-2 mt-4">
+                <button class="btn btn-primary-sb btn-sm flex-fill">Load</button>
+                <button class="btn btn-ghost-sb btn-sm">Retrain</button>
+                <button class="btn btn-ghost-sb btn-sm" aria-label="Delete profile"><i class="bi bi-trash text-muted-2"></i></button>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <div class="col-md-6 col-lg-4" data-sb-reveal>
+          <article class="sb-card sb-card-lift h-100">
+            <div class="card-body">
+              <div class="d-flex align-items-center gap-3">
+                <div class="sb-avatar">SN</div>
+                <div>
+                  <h3 class="h6 mb-0">Sanjay Nair</h3>
+                  <div class="text-muted-2 small">Calibrated 19 May 2026</div>
+                </div>
+                <span class="sb-badge warning ms-auto">Retrain</span>
+              </div>
+              <div class="mt-4">
+                <div class="d-flex justify-content-between small mb-1"><span>Accuracy</span><span>79%</span></div>
+                <div class="progress"><div class="progress-bar" style="width: 79%"></div></div>
+              </div>
+              <div class="d-flex gap-2 mt-4">
+                <button class="btn btn-primary-sb btn-sm flex-fill">Load</button>
+                <button class="btn btn-ghost-sb btn-sm">Retrain</button>
+                <button class="btn btn-ghost-sb btn-sm" aria-label="Delete profile"><i class="bi bi-trash text-muted-2"></i></button>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <div class="col-md-6 col-lg-4" data-sb-reveal>
+          <article class="sb-card sb-card-lift h-100">
+            <div class="card-body">
+              <div class="d-flex align-items-center gap-3">
+                <div class="sb-avatar">DK</div>
+                <div>
+                  <h3 class="h6 mb-0">Divya Kapoor</h3>
+                  <div class="text-muted-2 small">Calibrated 14 May 2026</div>
+                </div>
+              </div>
+              <div class="mt-4">
+                <div class="d-flex justify-content-between small mb-1"><span>Accuracy</span><span>93%</span></div>
+                <div class="progress"><div class="progress-bar" style="width: 93%"></div></div>
+              </div>
+              <div class="d-flex gap-2 mt-4">
+                <button class="btn btn-primary-sb btn-sm flex-fill">Load</button>
+                <button class="btn btn-ghost-sb btn-sm">Retrain</button>
+                <button class="btn btn-ghost-sb btn-sm" aria-label="Delete profile"><i class="bi bi-trash text-muted-2"></i></button>
+              </div>
+            </div>
+          </article>
+        </div>
+      </div>
+    </main>
+
+    <button class="sb-fab btn-ripple" aria-label="Add new signer profile" title="Add profile">
+      <i class="bi bi-plus-lg"></i>
+    </button>
+
+    <div data-sb-footer></div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/assets/js/config.js"></script>
+    <script src="/assets/js/app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Model Evaluation · SilentBridge</title>
+    <meta name="description" content="Compare the base model to a personalized SilentBridge adapter across accuracy, BLEU, WER, latency, calibration time, and memory." />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/assets/css/style.css" />
+  </head>
+  <body>
+    <div data-sb-nav></div>
+
+    <main class="container-sb py-5">
+      <header class="mb-5" data-sb-reveal>
+        <div class="text-muted-2 small">Evaluation</div>
+        <h1 class="h2 mb-2">Base model vs. SilentBridge Personalized</h1>
+        <p class="text-muted-2 mb-0">Measured on the same 500-phrase test set from the same signer.</p>
+      </header>
+
+      <div class="row g-4 mb-5">
+        <div class="col-lg-6" data-sb-reveal>
+          <div class="sb-card h-100">
+            <div class="card-body p-4">
+              <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                  <div class="text-muted-2 small">Baseline</div>
+                  <h2 class="h5 mb-0">Base ISL model</h2>
+                </div>
+                <span class="sb-badge muted">v1.0</span>
+              </div>
+
+              <div class="mb-3">
+                <div class="d-flex justify-content-between small mb-1"><span>Accuracy</span><span>78%</span></div>
+                <div class="progress"><div class="progress-bar" style="width: 78%; background: #94A3B8;"></div></div>
+              </div>
+              <div class="mb-3">
+                <div class="d-flex justify-content-between small mb-1"><span>BLEU</span><span>58.4</span></div>
+                <div class="progress"><div class="progress-bar" style="width: 58%; background: #94A3B8;"></div></div>
+              </div>
+              <div class="mb-3">
+                <div class="d-flex justify-content-between small mb-1"><span>WER (lower is better)</span><span>18.2%</span></div>
+                <div class="progress"><div class="progress-bar" style="width: 82%; background: #94A3B8;"></div></div>
+              </div>
+              <div class="mb-3">
+                <div class="d-flex justify-content-between small mb-1"><span>Latency</span><span>420 ms</span></div>
+                <div class="progress"><div class="progress-bar" style="width: 55%; background: #94A3B8;"></div></div>
+              </div>
+              <div class="mb-3">
+                <div class="d-flex justify-content-between small mb-1"><span>Calibration time</span><span>—</span></div>
+                <div class="progress"><div class="progress-bar" style="width: 0%;"></div></div>
+              </div>
+              <div>
+                <div class="d-flex justify-content-between small mb-1"><span>Memory</span><span>640 MB</span></div>
+                <div class="progress"><div class="progress-bar" style="width: 85%; background: #94A3B8;"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-6" data-sb-reveal>
+          <div class="sb-card h-100" style="border-color: rgba(37,99,235,0.35); box-shadow: 0 20px 40px rgba(37,99,235,0.08);">
+            <div class="card-body p-4">
+              <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                  <div class="text-muted-2 small">Personalized</div>
+                  <h2 class="h5 mb-0">SilentBridge · v2.4</h2>
+                </div>
+                <span class="sb-badge success"><i class="bi bi-stars"></i> Recommended</span>
+              </div>
+
+              <div class="mb-3">
+                <div class="d-flex justify-content-between small mb-1"><span>Accuracy</span><span>94%</span></div>
+                <div class="progress"><div class="progress-bar" style="width: 94%"></div></div>
+              </div>
+              <div class="mb-3">
+                <div class="d-flex justify-content-between small mb-1"><span>BLEU</span><span>72.8</span></div>
+                <div class="progress"><div class="progress-bar" style="width: 73%"></div></div>
+              </div>
+              <div class="mb-3">
+                <div class="d-flex justify-content-between small mb-1"><span>WER (lower is better)</span><span>6.1%</span></div>
+                <div class="progress"><div class="progress-bar" style="width: 94%"></div></div>
+              </div>
+              <div class="mb-3">
+                <div class="d-flex justify-content-between small mb-1"><span>Latency</span><span>312 ms</span></div>
+                <div class="progress"><div class="progress-bar" style="width: 78%"></div></div>
+              </div>
+              <div class="mb-3">
+                <div class="d-flex justify-content-between small mb-1"><span>Calibration time</span><span>4 min 52 s</span></div>
+                <div class="progress"><div class="progress-bar" style="width: 40%"></div></div>
+              </div>
+              <div>
+                <div class="d-flex justify-content-between small mb-1"><span>Memory</span><span>184 MB</span></div>
+                <div class="progress"><div class="progress-bar" style="width: 30%"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Delta summary -->
+      <section class="sb-card" data-sb-reveal>
+        <div class="card-body p-4 p-md-5">
+          <h2 class="h5 mb-4">What personalization changed</h2>
+          <div class="row g-4">
+            <div class="col-6 col-md-3">
+              <div class="text-muted-2 small">Accuracy</div>
+              <div class="h3 mb-0">+16 pts</div>
+              <div class="sb-badge success mt-1">78% → 94%</div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="text-muted-2 small">WER</div>
+              <div class="h3 mb-0">−12.1 pts</div>
+              <div class="sb-badge success mt-1">18.2% → 6.1%</div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="text-muted-2 small">Latency</div>
+              <div class="h3 mb-0">−108 ms</div>
+              <div class="sb-badge success mt-1">420 → 312 ms</div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="text-muted-2 small">Memory</div>
+              <div class="h3 mb-0">−71%</div>
+              <div class="sb-badge success mt-1">640 → 184 MB</div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div data-sb-footer></div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/assets/js/config.js"></script>
+    <script src="/assets/js/app.js"></script>
+  </body>
+</html>

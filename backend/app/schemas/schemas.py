@@ -32,6 +32,14 @@ class CalibrationStartRequest(BaseModel):
     user_id: int
 
 
+class CalibrationRequest(BaseModel):
+    user_id: int
+    calibration_seconds: float
+    pose_keypoints: list[list[float]]  # (frames, feature_dim)
+    face_keypoints: list[list[float]]  # (frames, feature_dim)
+    label_ids: list[int]  # (frames,) token ids aligned to each frame
+
+
 class CalibrationResult(BaseModel):
     adapter_id: int
     calibration_seconds: float
@@ -54,6 +62,8 @@ class AdapterOut(BaseModel):
 class TranslationRequest(BaseModel):
     user_id: int | None = None
     adapter_id: int | None = None  # if None, base model only
+    pose_keypoints: list[list[float]]  # (frames, feature_dim)
+    face_keypoints: list[list[float]]  # (frames, feature_dim)
 
 
 class TranslationResult(BaseModel):

@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Translation History · SilentBridge</title>
+    <meta name="description" content="Browse, search, and export your past sign language translation sessions." />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/assets/css/style.css" />
+  </head>
+  <body>
+    <div data-sb-nav></div>
+
+    <main class="container-sb py-5">
+      <header class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4" data-sb-reveal>
+        <div>
+          <div class="text-muted-2 small">Archive</div>
+          <h1 class="h2 mb-0">Translation history</h1>
+        </div>
+        <div class="d-flex gap-2">
+          <button class="btn btn-ghost-sb btn-icon"><i class="bi bi-filetype-csv"></i> Export CSV</button>
+          <button class="btn btn-primary-sb btn-icon btn-ripple"><i class="bi bi-download"></i> Download all</button>
+        </div>
+      </header>
+
+      <!-- Filters -->
+      <div class="sb-card mb-4" data-sb-reveal>
+        <div class="card-body p-3 p-md-4">
+          <div class="row g-3 align-items-center">
+            <div class="col-md-6">
+              <label for="sbSearch" class="visually-hidden">Search translations</label>
+              <div class="input-group">
+                <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted-2"></i></span>
+                <input id="sbSearch" type="search" class="form-control border-start-0" placeholder="Search transcripts, tags, or keywords" />
+              </div>
+            </div>
+            <div class="col-md-3">
+              <label for="sbDate" class="visually-hidden">Date range</label>
+              <select id="sbDate" class="form-select">
+                <option>Last 7 days</option>
+                <option>Last 30 days</option>
+                <option>Last 90 days</option>
+                <option>All time</option>
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label for="sbSort" class="visually-hidden">Sort</label>
+              <select id="sbSort" class="form-select">
+                <option>Sort by newest</option>
+                <option>Sort by confidence</option>
+                <option>Sort by length</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Translation cards -->
+      <div class="row g-3">
+        <!-- Repeatable card -->
+        <template id="tpl-history-card"></template>
+
+        <div class="col-md-6 col-lg-4" data-sb-reveal>
+          <article class="sb-card sb-card-lift h-100">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start">
+                <span class="text-muted-2 small">Today · 09:12</span>
+                <span class="sb-badge success">96%</span>
+              </div>
+              <h3 class="h6 mt-3 mb-2">Morning stand-up</h3>
+              <p class="text-muted-2 small mb-3">"Good morning team, today I'll be working on the calibration flow…"</p>
+              <div class="d-flex justify-content-between text-muted-2 small">
+                <span><i class="bi bi-clock"></i> 14 min</span>
+                <span><i class="bi bi-speedometer2"></i> 298 ms</span>
+              </div>
+              <div class="d-flex gap-2 mt-3">
+                <button class="btn btn-ghost-sb btn-sm flex-fill"><i class="bi bi-eye"></i> View</button>
+                <button class="btn btn-ghost-sb btn-sm"><i class="bi bi-download"></i></button>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <div class="col-md-6 col-lg-4" data-sb-reveal>
+          <article class="sb-card sb-card-lift h-100">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start">
+                <span class="text-muted-2 small">Yesterday · 18:40</span>
+                <span class="sb-badge success">94%</span>
+              </div>
+              <h3 class="h6 mt-3 mb-2">Interview practice</h3>
+              <p class="text-muted-2 small mb-3">"Tell me about a time you overcame a challenging communication barrier…"</p>
+              <div class="d-flex justify-content-between text-muted-2 small">
+                <span><i class="bi bi-clock"></i> 22 min</span>
+                <span><i class="bi bi-speedometer2"></i> 324 ms</span>
+              </div>
+              <div class="d-flex gap-2 mt-3">
+                <button class="btn btn-ghost-sb btn-sm flex-fill"><i class="bi bi-eye"></i> View</button>
+                <button class="btn btn-ghost-sb btn-sm"><i class="bi bi-download"></i></button>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <div class="col-md-6 col-lg-4" data-sb-reveal>
+          <article class="sb-card sb-card-lift h-100">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start">
+                <span class="text-muted-2 small">Mon · 20:05</span>
+                <span class="sb-badge">91%</span>
+              </div>
+              <h3 class="h6 mt-3 mb-2">Family video call</h3>
+              <p class="text-muted-2 small mb-3">"Amma, I finished the assignment today. It went really well…"</p>
+              <div class="d-flex justify-content-between text-muted-2 small">
+                <span><i class="bi bi-clock"></i> 36 min</span>
+                <span><i class="bi bi-speedometer2"></i> 352 ms</span>
+              </div>
+              <div class="d-flex gap-2 mt-3">
+                <button class="btn btn-ghost-sb btn-sm flex-fill"><i class="bi bi-eye"></i> View</button>
+                <button class="btn btn-ghost-sb btn-sm"><i class="bi bi-download"></i></button>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <div class="col-md-6 col-lg-4" data-sb-reveal>
+          <article class="sb-card sb-card-lift h-100">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start">
+                <span class="text-muted-2 small">Sun · 11:22</span>
+                <span class="sb-badge success">95%</span>
+              </div>
+              <h3 class="h6 mt-3 mb-2">Doctor appointment</h3>
+              <p class="text-muted-2 small mb-3">"I've been experiencing some discomfort after long study sessions…"</p>
+              <div class="d-flex justify-content-between text-muted-2 small">
+                <span><i class="bi bi-clock"></i> 18 min</span>
+                <span><i class="bi bi-speedometer2"></i> 310 ms</span>
+              </div>
+              <div class="d-flex gap-2 mt-3">
+                <button class="btn btn-ghost-sb btn-sm flex-fill"><i class="bi bi-eye"></i> View</button>
+                <button class="btn btn-ghost-sb btn-sm"><i class="bi bi-download"></i></button>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <div class="col-md-6 col-lg-4" data-sb-reveal>
+          <article class="sb-card sb-card-lift h-100">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start">
+                <span class="text-muted-2 small">Sat · 15:10</span>
+                <span class="sb-badge warning">83%</span>
+              </div>
+              <h3 class="h6 mt-3 mb-2">Coffee shop order</h3>
+              <p class="text-muted-2 small mb-3">"Can I get a medium filter coffee, no sugar please, and a croissant?"</p>
+              <div class="d-flex justify-content-between text-muted-2 small">
+                <span><i class="bi bi-clock"></i> 4 min</span>
+                <span><i class="bi bi-speedometer2"></i> 289 ms</span>
+              </div>
+              <div class="d-flex gap-2 mt-3">
+                <button class="btn btn-ghost-sb btn-sm flex-fill"><i class="bi bi-eye"></i> View</button>
+                <button class="btn btn-ghost-sb btn-sm"><i class="bi bi-download"></i></button>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <div class="col-md-6 col-lg-4" data-sb-reveal>
+          <article class="sb-card sb-card-lift h-100">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start">
+                <span class="text-muted-2 small">Fri · 08:30</span>
+                <span class="sb-badge success">97%</span>
+              </div>
+              <h3 class="h6 mt-3 mb-2">Weekly retrospective</h3>
+              <p class="text-muted-2 small mb-3">"This week we shipped the new adaptation flow and reduced latency by 18%."</p>
+              <div class="d-flex justify-content-between text-muted-2 small">
+                <span><i class="bi bi-clock"></i> 29 min</span>
+                <span><i class="bi bi-speedometer2"></i> 276 ms</span>
+              </div>
+              <div class="d-flex gap-2 mt-3">
+                <button class="btn btn-ghost-sb btn-sm flex-fill"><i class="bi bi-eye"></i> View</button>
+                <button class="btn btn-ghost-sb btn-sm"><i class="bi bi-download"></i></button>
+              </div>
+            </div>
+          </article>
+        </div>
+      </div>
+    </main>
+
+    <div data-sb-footer></div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/assets/js/config.js"></script>
+    <script src="/assets/js/app.js"></script>
+  </body>
+</html>

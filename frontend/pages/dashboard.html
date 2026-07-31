@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Dashboard · SilentBridge</title>
+    <meta name="description" content="Your SilentBridge workspace — quick actions, model status, and recent activity." />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/assets/css/style.css" />
+  </head>
+  <body>
+    <div data-sb-nav></div>
+
+    <main class="container-sb py-5">
+      <!-- Welcome -->
+      <header class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-5" data-sb-reveal>
+        <div>
+          <div class="text-muted-2 small">Welcome back</div>
+          <h1 class="h2 mb-1">Good afternoon, Aarav.</h1>
+          <p class="text-muted-2 mb-0">Your personalized model is ready. What would you like to do today?</p>
+        </div>
+        <div class="d-flex gap-2">
+          <a href="/pages/translate.html" class="btn btn-primary-sb btn-icon btn-ripple">
+            <i class="bi bi-broadcast"></i> Start Translation
+          </a>
+          <a href="/pages/calibration.html" class="btn btn-ghost-sb btn-icon">
+            <i class="bi bi-sliders"></i> Recalibrate
+          </a>
+        </div>
+      </header>
+
+      <!-- Quick actions -->
+      <section aria-label="Quick actions" class="mb-5">
+        <div class="row g-4">
+          <div class="col-sm-6 col-lg-3">
+            <a href="/pages/translate.html" class="text-decoration-none">
+              <div class="sb-card sb-card-lift h-100" data-sb-reveal>
+                <div class="card-body">
+                  <div class="sb-icon-tile"><i class="bi bi-broadcast"></i></div>
+                  <h3 class="h6 mt-3 mb-1 text-dark">Live Translation</h3>
+                  <p class="text-muted-2 small mb-0">Open the camera and start signing.</p>
+                </div>
+              </div>
+            </a>
+          </div>
+          <div class="col-sm-6 col-lg-3">
+            <a href="/pages/calibration.html" class="text-decoration-none">
+              <div class="sb-card sb-card-lift h-100" data-sb-reveal>
+                <div class="card-body">
+                  <div class="sb-icon-tile accent"><i class="bi bi-sliders"></i></div>
+                  <h3 class="h6 mt-3 mb-1 text-dark">Calibration</h3>
+                  <p class="text-muted-2 small mb-0">Tune the model to your signing style.</p>
+                </div>
+              </div>
+            </a>
+          </div>
+          <div class="col-sm-6 col-lg-3">
+            <a href="/pages/history.html" class="text-decoration-none">
+              <div class="sb-card sb-card-lift h-100" data-sb-reveal>
+                <div class="card-body">
+                  <div class="sb-icon-tile warn"><i class="bi bi-clock-history"></i></div>
+                  <h3 class="h6 mt-3 mb-1 text-dark">History</h3>
+                  <p class="text-muted-2 small mb-0">Review and export past sessions.</p>
+                </div>
+              </div>
+            </a>
+          </div>
+          <div class="col-sm-6 col-lg-3">
+            <a href="/pages/users.html" class="text-decoration-none">
+              <div class="sb-card sb-card-lift h-100" data-sb-reveal>
+                <div class="card-body">
+                  <div class="sb-icon-tile danger"><i class="bi bi-people"></i></div>
+                  <h3 class="h6 mt-3 mb-1 text-dark">Users</h3>
+                  <p class="text-muted-2 small mb-0">Manage profiles and adapters.</p>
+                </div>
+              </div>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <!-- Analytics + status -->
+      <section class="row g-4 mb-5">
+        <div class="col-lg-4">
+          <div class="sb-card h-100" data-sb-reveal>
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="text-muted-2 small">Model status</span>
+                <span class="sb-badge success"><i class="bi bi-check2-circle"></i> Healthy</span>
+              </div>
+              <h3 class="h4 mb-1">Personalized · v2.4</h3>
+              <p class="text-muted-2 small mb-4">Last synced 12 minutes ago</p>
+
+              <div class="mb-3">
+                <div class="d-flex justify-content-between small mb-1"><span>Accuracy</span><span>94%</span></div>
+                <div class="progress"><div class="progress-bar" style="width: 94%"></div></div>
+              </div>
+              <div class="mb-3">
+                <div class="d-flex justify-content-between small mb-1"><span>Latency</span><span>312 ms</span></div>
+                <div class="progress"><div class="progress-bar" style="width: 70%"></div></div>
+              </div>
+              <div>
+                <div class="d-flex justify-content-between small mb-1"><span>Memory</span><span>184 MB</span></div>
+                <div class="progress"><div class="progress-bar" style="width: 42%"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-4">
+          <div class="sb-card h-100" data-sb-reveal>
+            <div class="card-body">
+              <span class="text-muted-2 small">This week</span>
+              <h3 class="h4 mb-1">42 sessions</h3>
+              <p class="text-muted-2 small mb-4">3,120 words translated</p>
+              <div class="row text-center">
+                <div class="col-4">
+                  <div class="h5 mb-0">96%</div>
+                  <div class="text-muted-2 small">Confidence</div>
+                </div>
+                <div class="col-4">
+                  <div class="h5 mb-0">28</div>
+                  <div class="text-muted-2 small">Fps avg</div>
+                </div>
+                <div class="col-4">
+                  <div class="h5 mb-0">6.1%</div>
+                  <div class="text-muted-2 small">WER</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-4">
+          <div class="sb-card h-100" data-sb-reveal>
+            <div class="card-body">
+              <span class="text-muted-2 small">System health</span>
+              <h3 class="h4 mb-3">All systems operational</h3>
+              <ul class="list-unstyled d-grid gap-2 mb-0">
+                <li class="d-flex justify-content-between align-items-center">
+                  <span><i class="bi bi-camera-video text-muted-2 me-2"></i>Camera pipeline</span>
+                  <span class="sb-badge success">OK</span>
+                </li>
+                <li class="d-flex justify-content-between align-items-center">
+                  <span><i class="bi bi-cpu text-muted-2 me-2"></i>WebGPU runtime</span>
+                  <span class="sb-badge success">OK</span>
+                </li>
+                <li class="d-flex justify-content-between align-items-center">
+                  <span><i class="bi bi-cloud text-muted-2 me-2"></i>Sync service</span>
+                  <span class="sb-badge warning">Idle</span>
+                </li>
+                <li class="d-flex justify-content-between align-items-center">
+                  <span><i class="bi bi-shield-check text-muted-2 me-2"></i>Privacy shield</span>
+                  <span class="sb-badge success">On</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Recent activity -->
+      <section data-sb-reveal>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h2 class="h5 mb-0">Recent activity</h2>
+          <a href="/pages/history.html" class="small">View all</a>
+        </div>
+        <div class="sb-card">
+          <div class="card-body p-0">
+            <table class="sb-table" aria-label="Recent translations">
+              <thead>
+                <tr>
+                  <th>Session</th>
+                  <th>Duration</th>
+                  <th>Words</th>
+                  <th>Confidence</th>
+                  <th>Latency</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Morning stand-up</strong><br><span class="text-muted-2 small">Today · 9:12</span></td>
+                  <td>14 min</td>
+                  <td>612</td>
+                  <td><span class="sb-badge success">96%</span></td>
+                  <td>298 ms</td>
+                  <td class="text-end"><button class="btn btn-ghost-sb btn-sm"><i class="bi bi-download"></i></button></td>
+                </tr>
+                <tr>
+                  <td><strong>Interview practice</strong><br><span class="text-muted-2 small">Yesterday · 18:40</span></td>
+                  <td>22 min</td>
+                  <td>1,048</td>
+                  <td><span class="sb-badge success">94%</span></td>
+                  <td>324 ms</td>
+                  <td class="text-end"><button class="btn btn-ghost-sb btn-sm"><i class="bi bi-download"></i></button></td>
+                </tr>
+                <tr>
+                  <td><strong>Family call</strong><br><span class="text-muted-2 small">Mon · 20:05</span></td>
+                  <td>36 min</td>
+                  <td>2,204</td>
+                  <td><span class="sb-badge">91%</span></td>
+                  <td>352 ms</td>
+                  <td class="text-end"><button class="btn btn-ghost-sb btn-sm"><i class="bi bi-download"></i></button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div data-sb-footer></div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/assets/js/config.js"></script>
+    <script src="/assets/js/app.js"></script>
+  </body>
+</html>

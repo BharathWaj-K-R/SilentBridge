@@ -16,18 +16,19 @@ settings = get_settings()
 @router.post("", response_model=TranslationResult)
 def translate(
     payload: TranslationRequest,
-    pose_keypoints: list[list[float]],
-    face_keypoints: list[list[float]],
     db: Session = Depends(get_db),
 ):
     """Translate one clip's worth of pre-extracted pose + face keypoints.
+
+    Expects a flat JSON body:
+    { "user_id": ..., "adapter_id": ..., "pose_keypoints": [[...]], "face_keypoints": [[...]] }
 
     pose_keypoints / face_keypoints: shape (frames, feature_dim), already
     extracted client- or server-side (e.g. via MediaPipe Holistic). This
     endpoint does NOT do video decoding or keypoint extraction itself.
     """
-    pose = torch.tensor(pose_keypoints, dtype=torch.float32).unsqueeze(0)  # (1, frames, dim)
-    face = torch.tensor(face_keypoints, dtype=torch.float32).unsqueeze(0)
+    pose = torch.tensor(payload.pose_keypoints, dtype=torch.float32).unsqueeze(0)  # (1, frames, dim)
+    face = torch.tensor(payload.face_keypoints, dtype=torch.float32).unsqueeze(0)
 
     adapter = None
     if payload.adapter_id is not None:

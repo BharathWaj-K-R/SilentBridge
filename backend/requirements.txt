@@ -5,5 +5,6 @@ pydantic==2.9.2
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
 python-multipart==0.0.9
-torch==2.4.1
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.4.1+cpu
 numpy==1.26.4

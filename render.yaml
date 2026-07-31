@@ -1,0 +1,37 @@
+services:
+  # --- Backend: FastAPI web service ---
+  - type: web
+    name: silentbridge-backend
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    plan: free
+    envVars:
+      - key: ENV
+        value: production
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        value: sqlite:////var/data/silentbridge.db
+      - key: ALLOWED_ORIGINS
+        value: https://silentbridge-frontend.onrender.com
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: "60"
+      - key: CALIBRATION_MIN_SECONDS
+        value: "300"
+      - key: MAX_INFERENCE_LATENCY_MS
+        value: "500"
+    disk:
+      name: silentbridge-data
+      mountPath: /var/data
+      sizeGB: 1
+
+  # --- Frontend: static site ---
+  - type: web
+    name: silentbridge-frontend
+    runtime: static
+    rootDir: frontend
+    buildCommand: ""
+    staticPublishPath: .
+    envVars: []

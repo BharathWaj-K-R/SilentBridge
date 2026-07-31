@@ -13,7 +13,7 @@ services:
       - key: SECRET_KEY
         generateValue: true
       - key: DATABASE_URL
-        value: sqlite:////var/data/silentbridge.db
+        value: sqlite:///./silentbridge.db
       - key: ALLOWED_ORIGINS
         value: https://silentbridge-frontend.onrender.com
       - key: ACCESS_TOKEN_EXPIRE_MINUTES
@@ -22,10 +22,11 @@ services:
         value: "300"
       - key: MAX_INFERENCE_LATENCY_MS
         value: "500"
-    disk:
-      name: silentbridge-data
-      mountPath: /var/data
-      sizeGB: 1
+    # NOTE: no persistent Disk on the free tier — this SQLite file lives on
+    # ephemeral local storage and resets on every redeploy/restart/spin-down.
+    # Fine for a demo; if you need data to persist, upgrade this service to
+    # a paid plan and add back a `disk:` block, or switch to an external DB
+    # (e.g. Render's free Postgres) instead of SQLite.
 
   # --- Frontend: static site ---
   - type: web

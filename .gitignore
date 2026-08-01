@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+
+# Local environment and databases
+.env
+*.db
+silentbridge.db
+
+# Dataset archives, extracted features, and trained weights
+data/raw/
+data/processed/
+*.tar.gz
+*.zip
+backend/app/models/weights/*.pt
+backend/app/models/weights/*.pth
+backend/app/models/weights/*.ckpt
+backend/app/models/weights/*.vocab.json
+!backend/app/models/weights/.gitkeep
+!backend/app/models/weights/adapters/.gitkeep

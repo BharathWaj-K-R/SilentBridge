@@ -42,7 +42,8 @@ silentbridge/
 ## Datasets
 
 ISLTranslate, ISL-CSLTR, iSign, INCLUDE — all public ISL datasets.
-No download/prep scripts are wired up yet; add them under `data/`.
+ISLTranslate training is wired for the Exploration Lab release; see
+`data/README.md` for the expected local layout and trainer command.
 
 ## Local development
 
@@ -77,9 +78,10 @@ services. Update `ALLOWED_ORIGINS` (backend) and `API_BASE_URL` in
 
 ## Status / what's NOT built yet
 
-- Base model has **not been trained** — `base_model.py` defines the
-  architecture; you still need to run training on the ISL datasets and
-  save weights to `backend/app/models/weights/base_model.pt`.
+- Base model training is now wired for preprocessed ISLTranslate keypoints via
+  `backend/app/training/train_base_model.py`; you still need to download the
+  upstream dataset/features and run the trainer to produce
+  `backend/app/models/weights/base_model.pt`.
 - Keypoint extraction (video/webcam → pose+face landmarks, e.g. via
   MediaPipe Holistic) is **not implemented** — API endpoints expect
   pre-extracted keypoint arrays.

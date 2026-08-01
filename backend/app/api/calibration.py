@@ -20,17 +20,19 @@ def calibrate(
 
     Expects a flat JSON body:
     { "user_id": ..., "calibration_seconds": ..., "pose_keypoints": [[...]],
-      "face_keypoints": [[...]], "label_ids": [...] }
+      "face_keypoints": [[...]], "target_labels": [...] }
 
-    pose_keypoints / face_keypoints: (frames, feature_dim)
-    label_ids: (frames,) token ids aligned to each frame (or use CTC-style
-    sparse labels once the labeling scheme is finalized).
+    pose_keypoints / face_keypoints: (frames, feature_dim) — one clip.
+    target_labels: sentence-level token ids for this clip (NOT per-frame —
+    CTC loss handles the frame-to-token alignment internally; see
+    BridgeAdapterStack.calibrate() for why).
     """
     pose = torch.tensor(payload.pose_keypoints, dtype=torch.float32).unsqueeze(0)
     face = torch.tensor(payload.face_keypoints, dtype=torch.float32).unsqueeze(0)
-    labels = torch.tensor(payload.label_ids, dtype=torch.long).unsqueeze(0)
+    target_labels = torch.tensor(payload.target_labels, dtype=torch.long).unsqueeze(0)
+    target_lengths = torch.tensor([len(payload.target_labels)], dtype=torch.long)
 
-    result = calibrate_new_adapter(pose, face, labels, payload.calibration_seconds)
+    result = calibrate_new_adapter(pose, face, target_labels, target_lengths, payload.calibration_seconds)
 
     adapter_row = SignerAdapter(
         owner_id=payload.user_id,

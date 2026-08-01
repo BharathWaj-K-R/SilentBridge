@@ -1,0 +1,13 @@
+# Extra dependencies needed ONLY for offline dataset preprocessing and
+# training (scripts/, app/training/). NOT installed on the Render backend
+# service — that would bloat the production build with packages the live
+# API never uses (mediapipe/opencv especially are large).
+#
+# Install with: pip install -r requirements-training.txt (in addition to
+# requirements.txt) on whatever machine/Colab instance does the actual
+# training run.
+
+mediapipe==0.10.14
+opencv-python==4.10.0.84
+pose-format==0.4.0
+pandas==2.2.3

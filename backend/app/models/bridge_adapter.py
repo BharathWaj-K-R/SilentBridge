@@ -99,24 +99,51 @@ class BridgeAdapterStack(nn.Module):
         base_model,
         calibration_pose: torch.Tensor,
         calibration_face: torch.Tensor,
-        labels: torch.Tensor,
+        target_labels: torch.Tensor,
+        target_lengths: torch.Tensor,
         epochs: int = 20,
         lr: float = 1e-3,
+        blank_id: int = 0,
     ) -> dict:
         """Trains ONLY the adapter parameters on the signer's calibration
-        clip. Base model stays frozen (its params already have requires_grad
-        = False from load_frozen_base_model). Returns timing/param stats for
-        the ablation study and for storing in SignerAdapter.accuracy_gain_pct
+        clip, using CTC loss.
+
+        WHY CTC, NOT PER-FRAME CROSS-ENTROPY: a calibration/training clip has
+        ONE sentence-level label (a sequence of tokens), not a label for
+        every individual frame — there's no frame-to-token alignment given
+        by the dataset. CTC loss is built exactly for this: it marginalizes
+        over all possible frame-to-token alignments internally, which is
+        the standard approach for speech/handwriting/sign recognition.
+        (Same approach as app/training/train_base_model.py uses for the
+        base model itself — this keeps adapter calibration consistent
+        with how the base model was trained.)
+
+        calibration_pose / calibration_face: (batch, frames, feature_dim)
+        target_labels: (batch, max_target_len) — token ids, no blank inside,
+            padded with any value beyond target_lengths[i] (ignored).
+        target_lengths: (batch,) — true (unpadded) length of each target.
+        blank_id: vocab index reserved for the CTC blank token. Must match
+            what decode_logits() in inference_service.py treats as blank.
+
+        Base model stays frozen (its params already have requires_grad=False
+        from load_frozen_base_model). Returns timing/param stats for the
+        ablation study and for storing in SignerAdapter.accuracy_gain_pct
         upstream."""
         start = time.time()
         optimizer = torch.optim.Adam(self.parameters(), lr=lr)
-        loss_fn = nn.CrossEntropyLoss()
+        ctc_loss = nn.CTCLoss(blank=blank_id, zero_infinity=True)
+
+        batch_size, n_frames = calibration_pose.shape[0], calibration_pose.shape[1]
+        input_lengths = torch.full((batch_size,), n_frames, dtype=torch.long)
 
         self.train()
+        loss = torch.tensor(0.0)
         for _ in range(epochs):
             optimizer.zero_grad()
             logits = self.forward_with_base(base_model, calibration_pose, calibration_face)
-            loss = loss_fn(logits.reshape(-1, logits.shape[-1]), labels.reshape(-1))
+            log_probs = torch.log_softmax(logits, dim=-1)  # (batch, frames, vocab)
+            log_probs = log_probs.permute(1, 0, 2)  # CTCLoss wants (frames, batch, vocab)
+            loss = ctc_loss(log_probs, target_labels, input_lengths, target_lengths)
             loss.backward()
             optimizer.step()
         self.eval()

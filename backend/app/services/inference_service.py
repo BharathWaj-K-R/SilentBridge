@@ -30,18 +30,28 @@ def get_base_model():
     return _base_model
 
 
+CTC_BLANK_ID = 0
+
+
 def decode_logits(logits: torch.Tensor) -> tuple[str, float]:
-    """Greedy-decodes logits into text + returns mean top-token confidence.
-    Placeholder: swap for CTC decoding or a proper detokenizer once the
-    vocab/tokenizer is finalized."""
+    """Greedy CTC decode: collapse consecutive repeats, then drop blanks.
+    This matches the CTC training objective in bridge_adapter.py's
+    calibrate() and app/training/train_base_model.py — both use blank=0.
+    Returns decoded text + mean top-token confidence.
+    Placeholder tokenizer: swap _id_to_token for the real vocab saved
+    alongside base_model.pt (base_model.vocab.json) once trained."""
     probs = torch.softmax(logits, dim=-1)
     top_probs, top_ids = probs.max(dim=-1)  # (batch, frames)
     confidence = float(top_probs.mean().item())
 
-    tokens = [_id_to_token.get(i.item(), f"<{i.item()}>") for i in top_ids[0]]
-    # naive de-dup of consecutive repeats, CTC-style
-    deduped = [t for i, t in enumerate(tokens) if i == 0 or t != tokens[i - 1]]
-    text = " ".join(t for t in deduped if t not in ("<blank>", "<pad>"))
+    ids = top_ids[0].tolist()
+    # CTC collapse: drop consecutive duplicates first, THEN drop blanks
+    # (this order matters — it's what distinguishes "aa a" -> "a a" from "aaa" -> "a")
+    collapsed = [i for idx, i in enumerate(ids) if idx == 0 or i != ids[idx - 1]]
+    token_ids = [i for i in collapsed if i != CTC_BLANK_ID]
+
+    tokens = [_id_to_token.get(i, f"<{i}>") for i in token_ids]
+    text = " ".join(tokens)
     return text or "(no confident prediction)", confidence
 
 

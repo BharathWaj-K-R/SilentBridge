@@ -11,44 +11,81 @@ from app.models.base_model import SilentBridgeBaseModel
 from app.training.isltranslate import ISLTranslateKeypointDataset, SimpleCharTokenizer, collate_ctc_batch
 
 
+def run_epoch(model, loader, optimizer, loss_fn, device, max_grad_norm: float, train: bool) -> float:
+    model.train() if train else model.eval()
+    total_loss = 0.0
+    n_batches = 0
+
+    for batch in loader:
+        pose = batch["pose"].to(device)
+        face = batch["face"].to(device)
+        labels = batch["labels"].to(device)
+        input_lengths = batch["input_lengths"].to(device)
+        label_lengths = batch["label_lengths"].to(device)
+
+        with torch.set_grad_enabled(train):
+            logits = model(pose, face)
+            log_probs = torch.nn.functional.log_softmax(logits, dim=-1).transpose(0, 1)
+            loss = loss_fn(log_probs, labels, input_lengths, label_lengths)
+
+            if train:
+                optimizer.zero_grad()
+                loss.backward()
+                torch.nn.utils.clip_grad_norm_(model.parameters(), max_grad_norm)
+                optimizer.step()
+
+        total_loss += float(loss.item())
+        n_batches += 1
+
+    return total_loss / max(n_batches, 1)
+
+
 def train(args: argparse.Namespace) -> None:
     tokenizer = SimpleCharTokenizer()
     dataset = ISLTranslateKeypointDataset(args.data_dir, tokenizer=tokenizer)
     val_size = max(1, int(len(dataset) * args.val_fraction)) if len(dataset) > 1 else 0
     train_size = len(dataset) - val_size
-    train_dataset, _ = random_split(dataset, [train_size, val_size]) if val_size else (dataset, [])
+    train_dataset, val_dataset = random_split(dataset, [train_size, val_size]) if val_size else (dataset, None)
 
-    loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, collate_fn=collate_ctc_batch)
+    train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, collate_fn=collate_ctc_batch)
+    val_loader = (
+        DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False, collate_fn=collate_ctc_batch)
+        if val_dataset is not None and len(val_dataset) > 0
+        else None
+    )
+
     device = torch.device(args.device or ("cuda" if torch.cuda.is_available() else "cpu"))
     model = SilentBridgeBaseModel(vocab_size=tokenizer.vocab_size).to(device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
     loss_fn = torch.nn.CTCLoss(blank=0, zero_infinity=True)
 
-    model.train()
-    for epoch in range(1, args.epochs + 1):
-        total_loss = 0.0
-        for batch in loader:
-            pose = batch["pose"].to(device)
-            face = batch["face"].to(device)
-            labels = batch["labels"].to(device)
-            input_lengths = batch["input_lengths"].to(device)
-            label_lengths = batch["label_lengths"].to(device)
-
-            optimizer.zero_grad()
-            logits = model(pose, face)
-            log_probs = torch.nn.functional.log_softmax(logits, dim=-1).transpose(0, 1)
-            loss = loss_fn(log_probs, labels, input_lengths, label_lengths)
-            loss.backward()
-            torch.nn.utils.clip_grad_norm_(model.parameters(), args.max_grad_norm)
-            optimizer.step()
-            total_loss += float(loss.item())
-        print(f"epoch={epoch} train_loss={total_loss / max(len(loader), 1):.4f}")
-
     output_path = Path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    torch.save(model.state_dict(), output_path)
+
+    # NOTE: previously this trained blindly for all epochs and saved only the
+    # final one, even though a val split was created — the val set was never
+    # actually used. Now we evaluate every epoch and only keep the
+    # best-val-loss checkpoint, so a late epoch that overfits doesn't silently
+    # clobber a better earlier one.
+    best_val_loss = float("inf")
+    for epoch in range(1, args.epochs + 1):
+        train_loss = run_epoch(model, train_loader, optimizer, loss_fn, device, args.max_grad_norm, train=True)
+
+        if val_loader is not None:
+            val_loss = run_epoch(model, val_loader, optimizer, loss_fn, device, args.max_grad_norm, train=False)
+            print(f"epoch={epoch} train_loss={train_loss:.4f} val_loss={val_loss:.4f}")
+            if val_loss < best_val_loss:
+                best_val_loss = val_loss
+                torch.save(model.state_dict(), output_path)
+                print(f"  -> new best (val_loss={val_loss:.4f}), saved checkpoint to {output_path}")
+        else:
+            # No val split possible (dataset too small) — fall back to
+            # saving every epoch, since there's nothing to compare against.
+            print(f"epoch={epoch} train_loss={train_loss:.4f} (no val split — dataset too small)")
+            torch.save(model.state_dict(), output_path)
+
     tokenizer.save(output_path.with_suffix(".vocab.json"))
-    print(f"saved weights to {output_path}")
+    print(f"training done. best_val_loss={best_val_loss if val_loader else 'n/a'}. weights at {output_path}")
 
 
 def parse_args() -> argparse.Namespace:

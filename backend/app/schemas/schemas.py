@@ -35,9 +35,9 @@ class CalibrationStartRequest(BaseModel):
 class CalibrationRequest(BaseModel):
     user_id: int
     calibration_seconds: float
-    pose_keypoints: list[list[float]]  # (frames, feature_dim)
-    face_keypoints: list[list[float]]  # (frames, feature_dim)
-    label_ids: list[int]  # (frames,) token ids aligned to each frame
+    pose_keypoints: list[list[float]]  # (frames, feature_dim) — one clip
+    face_keypoints: list[list[float]]  # (frames, feature_dim) — one clip
+    target_labels: list[int]  # sentence-level token ids for this clip, no blank token
 
 
 class CalibrationResult(BaseModel):

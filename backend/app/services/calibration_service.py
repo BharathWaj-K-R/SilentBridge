@@ -18,10 +18,16 @@ settings = get_settings()
 def calibrate_new_adapter(
     pose: torch.Tensor,
     face: torch.Tensor,
-    labels: torch.Tensor,
+    target_labels: torch.Tensor,
+    target_lengths: torch.Tensor,
     calibration_seconds: float,
 ) -> dict:
     """Trains a new adapter for one signer and saves its weights.
+
+    target_labels: (batch, max_target_len) sentence-level token ids (no
+        blank token included — CTCLoss inserts blanks internally).
+    target_lengths: (batch,) true length of each target sequence.
+
     Returns the info needed to create a SignerAdapter DB row (see
     db/models.py) — caller is responsible for persisting that row.
     """
@@ -31,7 +37,7 @@ def calibrate_new_adapter(
     adapter = BridgeAdapterStack(d_model=base_model.d_model, n_layers=n_layers)
 
     base_param_count = sum(p.numel() for p in base_model.parameters())
-    stats = adapter.calibrate(base_model, pose, face, labels)
+    stats = adapter.calibrate(base_model, pose, face, target_labels, target_lengths)
 
     if not adapter.param_budget_ok(base_param_count):
         # Still save it — but flag it, so the ablation report can note the

@@ -18,5 +18,7 @@ backend/app/models/weights/*.pt
 backend/app/models/weights/*.pth
 backend/app/models/weights/*.ckpt
 backend/app/models/weights/*.vocab.json
+backend/app/models/weights/adapters/*.pt
+backend/app/models/weights/adapters/*.pth
 !backend/app/models/weights/.gitkeep
 !backend/app/models/weights/adapters/.gitkeep

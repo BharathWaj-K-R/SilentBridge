@@ -1,6 +1,6 @@
 /* SilentBridge — real translate wiring (webcam + MediaPipe Holistic + backend API)
-   Falls back to the old fake ticker if camera/model/backend unavailable,
-   so the demo never shows a broken page. */
+   FIXED VERSION: Properly pads face and pose keypoints to expected dimensions
+   Falls back to the old fake ticker if camera/model/backend unavailable. */
 
 (function () {
   "use strict";
@@ -22,6 +22,10 @@
   const FRAME_WINDOW = 15; // ~ buffer this many frames before sending to backend
   const TARGET_FPS = 15;
 
+  // FIXED: Expected dimensions for the model
+  const EXPECTED_POSE_DIM = 33 * 4;   // 132 (33 landmarks × 4 coords: x,y,z,visibility)
+  const EXPECTED_FACE_DIM = 478 * 3;  // 1434 (478 landmarks × 3 coords: x,y,z)
+
   let video, canvas, ctx, holistic, camera;
   let poseBuffer = [];
   let faceBuffer = [];
@@ -39,21 +43,63 @@
     }, 150);
   }
 
-  // Flattens MediaPipe's landmark list into [x,y,z,(visibility)] per point.
-  // Pads with zeros if a stream (pose/face) wasn't detected this frame, so
-  // the backend always receives a fixed-size feature vector.
+  // FIXED: Flattens MediaPipe's pose landmarks into a fixed-size vector
+  // Always returns exactly 132 dimensions, padding with zeros if needed
   function flattenPose(landmarks) {
-    if (!landmarks) return new Array(33 * 4).fill(0);
     const out = [];
-    landmarks.forEach((lm) => out.push(lm.x, lm.y, lm.z, lm.visibility || 0));
-    return out;
+    
+    if (!landmarks || landmarks.length === 0) {
+      // No pose detected → return all zeros
+      return new Array(EXPECTED_POSE_DIM).fill(0);
+    }
+    
+    // Flatten all detected landmarks: (x, y, z, visibility)
+    landmarks.forEach((lm) => {
+      out.push(
+        lm.x || 0,
+        lm.y || 0,
+        lm.z || 0,
+        lm.visibility || 0
+      );
+    });
+    
+    // Pad with zeros if we got fewer landmarks than expected
+    while (out.length < EXPECTED_POSE_DIM) {
+      out.push(0);
+    }
+    
+    // Truncate if somehow we got more (shouldn't happen, but defensive)
+    return out.slice(0, EXPECTED_POSE_DIM);
   }
 
+  // FIXED: Flattens MediaPipe's face landmarks into a fixed-size vector
+  // Always returns exactly 1434 dimensions, padding with zeros if needed
+  // This is the critical fix for the dimension mismatch error
   function flattenFace(landmarks) {
-    if (!landmarks) return new Array(478 * 3).fill(0);
     const out = [];
-    landmarks.forEach((lm) => out.push(lm.x, lm.y, lm.z));
-    return out;
+    
+    if (!landmarks || landmarks.length === 0) {
+      // No face detected → return all zeros
+      return new Array(EXPECTED_FACE_DIM).fill(0);
+    }
+    
+    // Flatten all detected landmarks: (x, y, z)
+    landmarks.forEach((lm) => {
+      out.push(
+        lm.x || 0,
+        lm.y || 0,
+        lm.z || 0
+      );
+    });
+    
+    // PAD with zeros if we got fewer landmarks than expected
+    // This handles the case where MediaPipe only detects 468 of 478 landmarks
+    while (out.length < EXPECTED_FACE_DIM) {
+      out.push(0);
+    }
+    
+    // Truncate if somehow we got more (shouldn't happen, but defensive)
+    return out.slice(0, EXPECTED_FACE_DIM);
   }
 
   async function sendToBackend() {
@@ -63,6 +109,13 @@
     const facePayload = faceBuffer.slice(-FRAME_WINDOW);
     poseBuffer = [];
     faceBuffer = [];
+
+    // DEBUG: Log actual dimensions being sent
+    if (posePayload.length > 0 && facePayload.length > 0) {
+      console.log(
+        `Sending ${posePayload.length} frames: pose dim=${posePayload[0].length}, face dim=${facePayload[0].length}`
+      );
+    }
 
     const start = performance.now();
     try {
@@ -76,7 +129,10 @@
           face_keypoints: facePayload,
         }),
       });
-      if (!res.ok) throw new Error(`Backend returned ${res.status}`);
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(`Backend returned ${res.status}: ${errorText}`);
+      }
       const result = await res.json();
       const clientLatency = performance.now() - start;
       setCaption(

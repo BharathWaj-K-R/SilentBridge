@@ -20,13 +20,29 @@ settings = get_settings()
 
 # Loaded once at process startup, reused across requests.
 _base_model = None
-_id_to_token: dict[int, str] = {}  # placeholder vocab; replace with real tokenizer output
+_id_to_token: dict[int, str] = {}
+
+
+def _load_vocab(base_model_path: str) -> dict[int, str]:
+    """Loads the id->token map saved alongside the base model weights
+    (train_base_model.py writes <weights>.vocab.json next to the .pt file).
+    Returns {} if no vocab file exists yet (e.g. still on placeholder/
+    randomly-initialized weights) — decode_logits() falls back to raw ids."""
+    import json
+    from pathlib import Path
+
+    vocab_path = Path(base_model_path).with_suffix(".vocab.json")
+    if not vocab_path.exists():
+        return {}
+    payload = json.loads(vocab_path.read_text(encoding="utf-8"))
+    return {idx: token for idx, token in enumerate(payload["id_to_token"])}
 
 
 def get_base_model():
-    global _base_model
+    global _base_model, _id_to_token
     if _base_model is None:
         _base_model = load_frozen_base_model(settings.BASE_MODEL_PATH)
+        _id_to_token = _load_vocab(settings.BASE_MODEL_PATH)
     return _base_model
 
 

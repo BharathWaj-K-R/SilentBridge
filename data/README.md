@@ -8,6 +8,11 @@ The dataset lives on Hugging Face (`Exploration-Lab/iSign`), is **gated**
 (~228GB total) — download it on your own machine or a Colab instance, not
 in a restricted sandbox.
 
+**Team-of-2 scope:** don't pull the full release. Pull a small subset (a
+few hundred clips, enough to cover a handful of signers for the adapter
+demo) — full-corpus training isn't the goal here, proving the adapter
+personalizes on top of a small base is.
+
 ## Preprocessing: two paths depending on what you have
 
 **If the release gives you pre-extracted MediaPipe features in

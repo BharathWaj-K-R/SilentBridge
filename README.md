@@ -76,6 +76,22 @@ point it at the repo, and Render will read `render.yaml` and provision both
 services. Update `ALLOWED_ORIGINS` (backend) and `API_BASE_URL` in
 `frontend/js/config.js` once you know the actual `.onrender.com` URLs.
 
+## Scope (team of 2)
+
+Trimmed deliberately to fit a two-person team:
+
+- Base model stays the small custom pose+face transformer already in
+  `base_model.py` (no public pretrained ISL checkpoint exists to fine-tune
+  instead) — kept lightweight on purpose so it trains on a small data subset
+  in reasonable time on Colab, not a full-scale corpus run.
+- Training uses a small subset of ISLTranslate/iSign (a few hundred clips),
+  not the full ~228GB release — enough to demonstrate the adapter effect,
+  not to chase SOTA translation accuracy.
+- Evaluation is a 2-way comparison only: base-only vs base+adapter. No
+  broader ablation matrix.
+- Confidence-aware calibration is cut from scope entirely, not just
+  deferred — the hook has been removed from `bridge_adapter.py`.
+
 ## Status / what's NOT built yet
 
 - Base model training is now wired for preprocessed ISLTranslate keypoints via
@@ -85,7 +101,5 @@ services. Update `ALLOWED_ORIGINS` (backend) and `API_BASE_URL` in
 - Keypoint extraction (video/webcam → pose+face landmarks, e.g. via
   MediaPipe Holistic) is **not implemented** — API endpoints expect
   pre-extracted keypoint arrays.
-- Confidence-aware calibration is a stretch goal, off by default
-  (`BridgeAdapterStack.confidence_aware = False`).
 - No RBAC, model versioning/rollback, or rate limiting — deferred by design
   to keep scope realistic for the hackathon timeline.

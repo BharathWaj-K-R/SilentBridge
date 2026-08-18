@@ -70,7 +70,6 @@ class BridgeAdapterStack(nn.Module):
         self.adapters = nn.ModuleList([
             BottleneckAdapter(d_model, bottleneck_dim) for _ in range(n_layers)
         ])
-        self.confidence_aware = False  # stretch goal flag; off until core adapter works
 
     def total_param_count(self) -> int:
         return sum(a.param_count() for a in self.adapters)
@@ -127,8 +126,8 @@ class BridgeAdapterStack(nn.Module):
 
         Base model stays frozen (its params already have requires_grad=False
         from load_frozen_base_model). Returns timing/param stats for the
-        ablation study and for storing in SignerAdapter.accuracy_gain_pct
-        upstream."""
+        base-vs-adapter comparison and for storing in
+        SignerAdapter.accuracy_gain_pct upstream."""
         start = time.time()
         optimizer = torch.optim.Adam(self.parameters(), lr=lr)
         ctc_loss = nn.CTCLoss(blank=blank_id, zero_infinity=True)
@@ -155,10 +154,3 @@ class BridgeAdapterStack(nn.Module):
             "param_count": self.total_param_count(),
         }
 
-    def maybe_update(self, base_confidence: float, threshold: float = 0.6) -> bool:
-        """Stretch-goal hook: confidence-aware calibration. Only relevant
-        once confidence_aware=True is turned on deliberately after the core
-        adapter is working end-to-end. Not part of core scope."""
-        if not self.confidence_aware:
-            return True
-        return base_confidence < threshold

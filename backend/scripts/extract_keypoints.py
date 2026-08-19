@@ -27,9 +27,53 @@ column-name flexibility as ISLTranslateKeypointDataset._read_examples().
 """
 import argparse
 import os
+import sys
+import types
 
 import numpy as np
 import pandas as pd
+
+
+def _stub_tensorflow_for_mediapipe() -> None:
+    """mediapipe's __init__.py unconditionally imports mediapipe.tasks.python,
+    whose audio submodule eagerly does
+    `from tensorflow.tools.docs import doc_controls` purely for a no-op docs
+    decorator — unrelated to anything this script actually uses (legacy
+    mp.solutions.holistic). On environments with a real tensorflow already
+    installed (e.g. Colab) whose protobuf pin conflicts with mediapipe's own,
+    that unrelated import chain blows up with
+    "ImportError: cannot import name 'runtime_version' from 'google.protobuf'".
+    Fix: pre-register a fake tensorflow.tools.docs module in sys.modules
+    before mediapipe is ever imported, so Python's import system uses this
+    stub instead of loading the real (version-conflicting) tensorflow at all.
+    Skipped if tensorflow isn't installed or already imported successfully."""
+    if "tensorflow" in sys.modules:
+        return
+    try:
+        import tensorflow  # noqa: F401 — if this actually works, no stub needed
+        return
+    except Exception:
+        pass
+
+    def _noop_decorator(f):
+        return f
+
+    fake_tf = types.ModuleType("tensorflow")
+    fake_tf_tools = types.ModuleType("tensorflow.tools")
+    fake_tf_tools_docs = types.ModuleType("tensorflow.tools.docs")
+    fake_tf_tools_docs.doc_controls = types.SimpleNamespace(
+        do_not_generate_docs=_noop_decorator,
+        for_subclass_implementers=_noop_decorator,
+        do_not_doc_inheritable=_noop_decorator,
+    )
+    fake_tf.tools = fake_tf_tools
+    fake_tf_tools.docs = fake_tf_tools_docs
+    sys.modules["tensorflow"] = fake_tf
+    sys.modules["tensorflow.tools"] = fake_tf_tools
+    sys.modules["tensorflow.tools.docs"] = fake_tf_tools_docs
+
+
+_stub_tensorflow_for_mediapipe()
 
 
 def extract_clip_keypoints(video_path: str, holistic) -> tuple[np.ndarray, np.ndarray]:

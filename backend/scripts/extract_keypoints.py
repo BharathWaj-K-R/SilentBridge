@@ -4,9 +4,10 @@ MediaPipe Holistic, saving them in the exact layout
 app/training/isltranslate.py's ISLTranslateKeypointDataset expects:
 
     data/processed/isltranslate/
-    ├── ISLTranslate.csv   (you already have this from the dataset)
+    ├── ISLTranslate.csv   (written by this script — only successfully
+    │                       extracted, dimension-validated uids)
     ├── pose/<uid>.npy     (frames, 132)
-    └── face/<uid>.npy     (frames, 1434)
+    └── face/<uid>.npy     (frames, 1404)
 
 Use this if you have RAW VIDEO clips. If the dataset already ships
 pre-extracted MediaPipe features (some ISLTranslate/iSign releases do, in
@@ -24,6 +25,14 @@ Usage:
 Expects labels_csv to have a uid column (or video_uid/id) matching video
 filenames as <uid>.mp4, plus a text/translation/english column — same
 column-name flexibility as ISLTranslateKeypointDataset._read_examples().
+
+Resumable: if pose/<uid>.npy and face/<uid>.npy already exist and pass
+dimension validation, that uid is skipped and counted under "already
+processed" rather than re-extracted. Re-run this script freely — it will
+only do new work.
+
+Fault-tolerant: one bad clip is logged to <out_dir>/extraction_failures.csv
+and skipped; it does not abort the run for the remaining clips.
 """
 import argparse
 import os
@@ -32,6 +41,14 @@ import types
 
 import numpy as np
 import pandas as pd
+
+
+# Single source of truth for the MediaPipe Holistic feature contract —
+# mirrors app/models/base_model.py's POSE_INPUT_DIM / FACE_INPUT_DIM. Legacy
+# mp.solutions.holistic (no iris refinement) gives 33 pose landmarks
+# (x,y,z,visibility) and 468 face landmarks (x,y,z).
+POSE_FEATURE_DIM = 33 * 4   # 132
+FACE_FEATURE_DIM = 468 * 3  # 1404
 
 
 def _stub_tensorflow_for_mediapipe() -> None:
@@ -77,6 +94,15 @@ _stub_tensorflow_for_mediapipe()
 
 
 def extract_clip_keypoints(video_path: str, holistic) -> tuple[np.ndarray, np.ndarray]:
+    """Runs MediaPipe Holistic over every frame of one clip. Raises
+    ValueError if any frame produces an unexpected landmark count — this
+    used to only happen inconsistently (zeros-fallback used a different
+    dimension than the real-landmark case), which crashed np.stack() later
+    with mismatched per-frame shapes. Now every frame — real or
+    zeros-fallback — is exactly POSE_FEATURE_DIM / FACE_FEATURE_DIM, and any
+    genuine mismatch (a MediaPipe version returning a different landmark
+    count) fails loudly right here instead of silently corrupting the
+    stacked array."""
     import cv2
 
     cap = cv2.VideoCapture(video_path)
@@ -90,29 +116,60 @@ def extract_clip_keypoints(video_path: str, holistic) -> tuple[np.ndarray, np.nd
         results = holistic.process(frame_rgb)
 
         if results.pose_landmarks:
-            pose_frames.append(
-                np.array(
-                    [[lm.x, lm.y, lm.z, lm.visibility] for lm in results.pose_landmarks.landmark],
-                    dtype=np.float32,
-                ).flatten()
-            )
+            pose = np.array(
+                [[lm.x, lm.y, lm.z, lm.visibility] for lm in results.pose_landmarks.landmark],
+                dtype=np.float32,
+            ).flatten()
+            if pose.shape[0] != POSE_FEATURE_DIM:
+                raise ValueError(
+                    f"Unexpected pose feature dimension: {pose.shape[0]}, "
+                    f"expected {POSE_FEATURE_DIM}"
+                )
         else:
-            pose_frames.append(np.zeros(33 * 4, dtype=np.float32))
+            pose = np.zeros(POSE_FEATURE_DIM, dtype=np.float32)
+        pose_frames.append(pose)
 
         if results.face_landmarks:
-            face_frames.append(
-                np.array(
-                    [[lm.x, lm.y, lm.z] for lm in results.face_landmarks.landmark],
-                    dtype=np.float32,
-                ).flatten()
-            )
+            face = np.array(
+                [[lm.x, lm.y, lm.z] for lm in results.face_landmarks.landmark],
+                dtype=np.float32,
+            ).flatten()
+            if face.shape[0] != FACE_FEATURE_DIM:
+                raise ValueError(
+                    f"Unexpected face feature dimension: {face.shape[0]}, "
+                    f"expected {FACE_FEATURE_DIM}"
+                )
         else:
-            face_frames.append(np.zeros(478 * 3, dtype=np.float32))
+            face = np.zeros(FACE_FEATURE_DIM, dtype=np.float32)
+        face_frames.append(face)
 
     cap.release()
     if not pose_frames:
         raise ValueError(f"No frames read from {video_path} — check the file isn't corrupt")
-    return np.stack(pose_frames), np.stack(face_frames)
+
+    pose_arr = np.stack(pose_frames)
+    face_arr = np.stack(face_frames)
+    if pose_arr.shape[0] != face_arr.shape[0]:
+        raise ValueError(
+            f"pose/face frame count mismatch: {pose_arr.shape[0]} vs {face_arr.shape[0]}"
+        )
+    return pose_arr, face_arr
+
+
+def _load_and_validate(path: str, expected_dim: int) -> np.ndarray | None:
+    """Loads a previously-saved .npy and checks it's actually usable —
+    2D, right feature dimension. Returns None (treat as not-yet-processed)
+    on any problem, so a corrupted leftover from an interrupted run gets
+    reprocessed rather than silently accepted."""
+    if not os.path.exists(path):
+        return None
+    try:
+        arr = np.load(path)
+    except Exception:
+        return None
+    if arr.ndim != 2 or arr.shape[1] != expected_dim:
+        return None
+    return arr
 
 
 def resolve_uid_column(columns: list[str]) -> str:
@@ -121,6 +178,14 @@ def resolve_uid_column(columns: list[str]) -> str:
         if candidate in lower:
             return lower[candidate]
     raise ValueError(f"No uid-like column found in CSV. Columns: {columns}")
+
+
+def resolve_text_column(columns: list[str]) -> str:
+    lower = {c.lower(): c for c in columns}
+    for candidate in ("text", "translation", "english"):
+        if candidate in lower:
+            return lower[candidate]
+    raise ValueError(f"No text-like column found in CSV. Columns: {columns}")
 
 
 def main():
@@ -140,26 +205,76 @@ def main():
 
     df = pd.read_csv(args.labels_csv)
     uid_col = resolve_uid_column(list(df.columns))
-    uids = df[uid_col].astype(str).tolist()
+    text_col = resolve_text_column(list(df.columns))
+
+    already, newly, missing_video = 0, 0, 0
+    failures: list[dict[str, str]] = []
+    valid_rows: list[tuple[str, str]] = []
 
     mp_holistic = mp.solutions.holistic
-    done, skipped = 0, 0
     with mp_holistic.Holistic(static_image_mode=False, model_complexity=1) as holistic:
-        for uid in uids:
+        for _, row in df.iterrows():
+            uid = str(row[uid_col]).strip()
+            text = str(row[text_col]).strip()
+            if not uid or not text:
+                continue
+
+            pose_path = os.path.join(pose_dir, f"{uid}.npy")
+            face_path = os.path.join(face_dir, f"{uid}.npy")
+
+            existing_pose = _load_and_validate(pose_path, POSE_FEATURE_DIM)
+            existing_face = _load_and_validate(face_path, FACE_FEATURE_DIM)
+            if (
+                existing_pose is not None
+                and existing_face is not None
+                and existing_pose.shape[0] == existing_face.shape[0]
+            ):
+                already += 1
+                valid_rows.append((uid, text))
+                continue
+
             video_path = os.path.join(args.videos_dir, f"{uid}.mp4")
             if not os.path.exists(video_path):
                 print(f"  Skipping {uid}: no video file at {video_path}")
-                skipped += 1
+                missing_video += 1
                 continue
 
-            pose, face = extract_clip_keypoints(video_path, holistic)
-            np.save(os.path.join(pose_dir, f"{uid}.npy"), pose)
-            np.save(os.path.join(face_dir, f"{uid}.npy"), face)
-            done += 1
-            print(f"[{done}] {uid} -> {pose.shape[0]} frames")
+            try:
+                pose, face = extract_clip_keypoints(video_path, holistic)
+                np.save(pose_path, pose)
+                np.save(face_path, face)
+                newly += 1
+                valid_rows.append((uid, text))
+                print(f"[{already + newly}] {uid} -> {pose.shape[0]} frames")
+            except Exception as exc:
+                failures.append({
+                    "uid": uid,
+                    "video_path": video_path,
+                    "exception_type": type(exc).__name__,
+                    "exception_message": str(exc),
+                })
+                print(f"  FAILED {uid}: {type(exc).__name__}: {exc}")
+                continue
 
-    print(f"Done. {done} clips extracted, {skipped} skipped (missing video). "
-          f"Now copy/symlink {args.labels_csv} into {args.out_dir}/ISLTranslate.csv if not already there.")
+    total_valid = already + newly
+    print(f"\nAlready processed: {already}")
+    print(f"Newly processed: {newly}")
+    print(f"Failed: {len(failures)}")
+    print(f"Skipped (missing video): {missing_video}")
+    print(f"Total valid outputs: {total_valid}")
+
+    failures_path = os.path.join(args.out_dir, "extraction_failures.csv")
+    pd.DataFrame(
+        failures, columns=["uid", "video_path", "exception_type", "exception_message"]
+    ).to_csv(failures_path, index=False)
+    print(f"Failure report: {failures_path} ({len(failures)} rows)")
+
+    # Validated manifest — only uids with dimension-checked pose+face arrays.
+    # This IS data/processed/isltranslate/ISLTranslate.csv; no separate
+    # manual copy step needed.
+    manifest_path = os.path.join(args.out_dir, "ISLTranslate.csv")
+    pd.DataFrame(valid_rows, columns=["uid", "text"]).to_csv(manifest_path, index=False)
+    print(f"Validated manifest written: {manifest_path} ({len(valid_rows)} rows)")
 
 
 if __name__ == "__main__":

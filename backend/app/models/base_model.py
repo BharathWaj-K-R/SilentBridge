@@ -21,6 +21,15 @@ import torch
 import torch.nn as nn
 
 
+# Single source of truth for the MediaPipe Holistic feature contract.
+# Legacy `mp.solutions.holistic` (not the newer face_mesh w/ iris refinement)
+# gives 33 pose landmarks (x,y,z,visibility) and 468 face landmarks (x,y,z).
+# Verified against actual extracted samples — see extract_keypoints.py, which
+# validates every frame against these same constants.
+POSE_INPUT_DIM = 33 * 4   # 132
+FACE_INPUT_DIM = 468 * 3  # 1404
+
+
 class StreamEncoder(nn.Module):
     """Encodes a single stream of keypoints (pose OR face) into a sequence
     of d_model-dim embeddings, one per frame."""
@@ -64,8 +73,8 @@ class SilentBridgeBaseModel(nn.Module):
 
     def __init__(
         self,
-        pose_input_dim: int = 132,   # e.g. 33 MediaPipe pose landmarks * 4 (x,y,z,visibility)
-        face_input_dim: int = 1434,  # e.g. 478 face mesh landmarks * 3 (x,y,z)
+        pose_input_dim: int = POSE_INPUT_DIM,  # 33 MediaPipe pose landmarks * 4 (x,y,z,visibility)
+        face_input_dim: int = FACE_INPUT_DIM,  # 468 MediaPipe face landmarks * 3 (x,y,z)
         d_model: int = 256,
         vocab_size: int = 3000,      # placeholder; set from actual tokenizer/vocab at train time
         shared_layers: int = 4,

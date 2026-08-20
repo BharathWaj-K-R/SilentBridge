@@ -16,6 +16,8 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset
 
+from app.models.base_model import MAX_SEQUENCE_LENGTH
+
 
 @dataclass(frozen=True)
 class ISLTranslateExample:
@@ -113,20 +115,58 @@ class ISLTranslateKeypointDataset(Dataset):
         return {"uid": example.uid, "pose": pose, "face": face, "labels": labels, "text": example.text}
 
 
+def _downsample_to_max_length(pose: torch.Tensor, face: torch.Tensor, uid: str) -> tuple[torch.Tensor, torch.Tensor]:
+    """Uniformly downsamples pose+face to MAX_SEQUENCE_LENGTH frames if the
+    clip is longer than that (e.g. one ISL-CSLTR outlier clip runs 4500
+    frames vs the model's 1024-frame positional embedding). Clips at or
+    under the cap are returned unchanged. One shared index array is used for
+    both streams so pose and face stay frame-aligned after sampling."""
+    pose_frames = int(pose.shape[0])
+    face_frames = int(face.shape[0])
+    if pose_frames != face_frames:
+        raise ValueError(
+            f"pose/face frame count mismatch for uid={uid!r}: "
+            f"{pose_frames} vs {face_frames}"
+        )
+
+    if pose_frames <= MAX_SEQUENCE_LENGTH:
+        return pose, face
+
+    indices = torch.linspace(0, pose_frames - 1, steps=MAX_SEQUENCE_LENGTH).long()
+    pose = pose[indices]
+    face = face[indices]
+    if pose.shape[0] != face.shape[0]:
+        raise ValueError(
+            f"pose/face frame count mismatch after downsampling for uid={uid!r}: "
+            f"{pose.shape[0]} vs {face.shape[0]}"
+        )
+    return pose, face
+
+
 def collate_ctc_batch(batch: list[dict[str, torch.Tensor | str]]) -> dict[str, torch.Tensor | list[str]]:
     pose_dim = int(batch[0]["pose"].shape[-1])  # type: ignore[index, union-attr]
     face_dim = int(batch[0]["face"].shape[-1])  # type: ignore[index, union-attr]
-    max_frames = max(int(item["pose"].shape[0]) for item in batch)  # type: ignore[index, union-attr]
 
-    pose = torch.zeros(len(batch), max_frames, pose_dim)
-    face = torch.zeros(len(batch), max_frames, face_dim)
-    input_lengths = torch.zeros(len(batch), dtype=torch.long)
+    # Downsample any over-length clips (> MAX_SEQUENCE_LENGTH frames) first,
+    # so max_frames below — and every input_length — reflects the actual
+    # post-downsampling sequence the model will see.
+    sampled_items = []
+    for item in batch:
+        uid = str(item["uid"])
+        pose, face = _downsample_to_max_length(item["pose"], item["face"], uid)  # type: ignore[arg-type]
+        sampled_items.append({**item, "pose": pose, "face": face})
+
+    max_frames = max(int(item["pose"].shape[0]) for item in sampled_items)  # type: ignore[index, union-attr]
+
+    pose = torch.zeros(len(sampled_items), max_frames, pose_dim)
+    face = torch.zeros(len(sampled_items), max_frames, face_dim)
+    input_lengths = torch.zeros(len(sampled_items), dtype=torch.long)
     label_chunks = []
-    label_lengths = torch.zeros(len(batch), dtype=torch.long)
+    label_lengths = torch.zeros(len(sampled_items), dtype=torch.long)
     uids: list[str] = []
     texts: list[str] = []
 
-    for idx, item in enumerate(batch):
+    for idx, item in enumerate(sampled_items):
         item_pose = item["pose"]  # type: ignore[assignment]
         item_face = item["face"]  # type: ignore[assignment]
         item_labels = item["labels"]  # type: ignore[assignment]

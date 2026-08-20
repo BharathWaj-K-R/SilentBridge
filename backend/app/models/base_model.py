@@ -29,6 +29,14 @@ import torch.nn as nn
 POSE_INPUT_DIM = 33 * 4   # 132
 FACE_INPUT_DIM = 468 * 3  # 1404
 
+# Hard cap on frames per clip fed to the model, enforced by the positional
+# embedding size below. Real clips can run far longer (e.g. one ISL-CSLTR
+# outlier has 4500 frames) — collate_ctc_batch in
+# app/training/isltranslate.py uniformly downsamples anything longer than
+# this to exactly MAX_SEQUENCE_LENGTH frames before it ever reaches the
+# model, rather than raising the embedding table to fit the outlier.
+MAX_SEQUENCE_LENGTH = 1024
+
 
 class StreamEncoder(nn.Module):
     """Encodes a single stream of keypoints (pose OR face) into a sequence
@@ -37,7 +45,7 @@ class StreamEncoder(nn.Module):
     def __init__(self, input_dim: int, d_model: int = 256, n_layers: int = 2, n_heads: int = 4):
         super().__init__()
         self.input_proj = nn.Linear(input_dim, d_model)
-        self.pos_embedding = nn.Parameter(torch.zeros(1, 1024, d_model))  # supports up to 1024 frames
+        self.pos_embedding = nn.Parameter(torch.zeros(1, MAX_SEQUENCE_LENGTH, d_model))  # supports up to MAX_SEQUENCE_LENGTH frames
         encoder_layer = nn.TransformerEncoderLayer(
             d_model=d_model, nhead=n_heads, dim_feedforward=d_model * 4,
             batch_first=True, dropout=0.1,

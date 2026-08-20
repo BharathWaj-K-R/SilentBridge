@@ -43,7 +43,7 @@ Either way you end up with:
 data/processed/isltranslate/
 ├── ISLTranslate.csv
 ├── pose/<uid>.npy   # shape: frames x 132
-└── face/<uid>.npy   # shape: frames x 1434
+└── face/<uid>.npy   # shape: frames x 1404
 ```
 
 ## Train

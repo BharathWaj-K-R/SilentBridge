@@ -45,6 +45,20 @@ ISLTranslate, ISL-CSLTR, iSign, INCLUDE — all public ISL datasets.
 ISLTranslate training is wired for the Exploration Lab release; see
 `data/README.md` for the expected local layout and trainer command.
 
+## Training Notebooks
+
+### Google Colab
+
+`notebooks/train_base_model_colab.ipynb`
+
+Google Colab training workflow.
+
+### Lightning AI
+
+`notebooks/train_base_model_lightning.ipynb`
+
+Persistent Lightning AI Studio training workflow with resumable extraction and training checkpoints.
+
 ## Local development
 
 ### Backend

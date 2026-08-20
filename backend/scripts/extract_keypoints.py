@@ -33,6 +33,12 @@ only do new work.
 
 Fault-tolerant: one bad clip is logged to <out_dir>/extraction_failures.csv
 and skipped; it does not abort the run for the remaining clips.
+
+Both <out_dir>/ISLTranslate.csv (the completion manifest) and
+<out_dir>/extraction_failures.csv are written row-by-row and flushed to
+disk immediately after each video, not batched up and written once at the
+end — so if the process is killed partway through (Studio stop, OOM,
+Ctrl-C), both files still reflect every video completed up to that point.
 """
 import argparse
 import os
@@ -196,6 +202,8 @@ def main():
                          help="e.g. data/processed/isltranslate — pose/ and face/ subfolders created here")
     args = parser.parse_args()
 
+    import csv
+
     import mediapipe as mp
 
     pose_dir = os.path.join(args.out_dir, "pose")
@@ -207,12 +215,44 @@ def main():
     uid_col = resolve_uid_column(list(df.columns))
     text_col = resolve_text_column(list(df.columns))
 
-    already, newly, missing_video = 0, 0, 0
-    failures: list[dict[str, str]] = []
-    valid_rows: list[tuple[str, str]] = []
+    already, newly, missing_video, failed = 0, 0, 0, 0
+
+    # Both the manifest and the failure log are written row-by-row and
+    # flushed to disk immediately, not accumulated in memory and written
+    # once at the end. If the process is killed (Studio stop, OOM, Ctrl-C)
+    # partway through, both files still reflect everything completed up to
+    # that point — the manifest doubles as a live completion record, not
+    # just a final artifact. Each run rewrites both from scratch (truncated
+    # here), which is safe: uids already valid on disk are re-validated
+    # near-instantly by _load_and_validate and re-appended within the same
+    # pass, so a resumed run quickly restores full manifest coverage before
+    # spending any time on genuinely new extraction work.
+    manifest_path = os.path.join(args.out_dir, "ISLTranslate.csv")
+    failures_path = os.path.join(args.out_dir, "extraction_failures.csv")
 
     mp_holistic = mp.solutions.holistic
-    with mp_holistic.Holistic(static_image_mode=False, model_complexity=1) as holistic:
+    with open(manifest_path, "w", newline="", encoding="utf-8") as manifest_fh, \
+         open(failures_path, "w", newline="", encoding="utf-8") as failures_fh, \
+         mp_holistic.Holistic(static_image_mode=False, model_complexity=1) as holistic:
+
+        manifest_writer = csv.writer(manifest_fh)
+        manifest_writer.writerow(["uid", "text"])
+        manifest_fh.flush()
+
+        failures_writer = csv.writer(failures_fh)
+        failures_writer.writerow(["uid", "video_path", "exception_type", "exception_message"])
+        failures_fh.flush()
+
+        def _mark_complete(uid: str, text: str) -> None:
+            manifest_writer.writerow([uid, text])
+            manifest_fh.flush()
+            os.fsync(manifest_fh.fileno())
+
+        def _mark_failed(uid: str, video_path: str, exc: Exception) -> None:
+            failures_writer.writerow([uid, video_path, type(exc).__name__, str(exc)])
+            failures_fh.flush()
+            os.fsync(failures_fh.fileno())
+
         for _, row in df.iterrows():
             uid = str(row[uid_col]).strip()
             text = str(row[text_col]).strip()
@@ -230,7 +270,7 @@ def main():
                 and existing_pose.shape[0] == existing_face.shape[0]
             ):
                 already += 1
-                valid_rows.append((uid, text))
+                _mark_complete(uid, text)
                 continue
 
             video_path = os.path.join(args.videos_dir, f"{uid}.mp4")
@@ -241,40 +281,28 @@ def main():
 
             try:
                 pose, face = extract_clip_keypoints(video_path, holistic)
+                # Save immediately on success, before moving to the next
+                # video — so a completed clip is never lost to an
+                # interruption that happens later in the loop.
                 np.save(pose_path, pose)
                 np.save(face_path, face)
                 newly += 1
-                valid_rows.append((uid, text))
+                _mark_complete(uid, text)
                 print(f"[{already + newly}] {uid} -> {pose.shape[0]} frames")
             except Exception as exc:
-                failures.append({
-                    "uid": uid,
-                    "video_path": video_path,
-                    "exception_type": type(exc).__name__,
-                    "exception_message": str(exc),
-                })
+                failed += 1
+                _mark_failed(uid, video_path, exc)
                 print(f"  FAILED {uid}: {type(exc).__name__}: {exc}")
                 continue
 
     total_valid = already + newly
     print(f"\nAlready processed: {already}")
     print(f"Newly processed: {newly}")
-    print(f"Failed: {len(failures)}")
+    print(f"Failed: {failed}")
     print(f"Skipped (missing video): {missing_video}")
     print(f"Total valid outputs: {total_valid}")
-
-    failures_path = os.path.join(args.out_dir, "extraction_failures.csv")
-    pd.DataFrame(
-        failures, columns=["uid", "video_path", "exception_type", "exception_message"]
-    ).to_csv(failures_path, index=False)
-    print(f"Failure report: {failures_path} ({len(failures)} rows)")
-
-    # Validated manifest — only uids with dimension-checked pose+face arrays.
-    # This IS data/processed/isltranslate/ISLTranslate.csv; no separate
-    # manual copy step needed.
-    manifest_path = os.path.join(args.out_dir, "ISLTranslate.csv")
-    pd.DataFrame(valid_rows, columns=["uid", "text"]).to_csv(manifest_path, index=False)
-    print(f"Validated manifest written: {manifest_path} ({len(valid_rows)} rows)")
+    print(f"Failure report: {failures_path}")
+    print(f"Validated manifest written: {manifest_path} ({total_valid} rows)")
 
 
 if __name__ == "__main__":

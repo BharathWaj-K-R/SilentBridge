@@ -19,12 +19,19 @@
   const placeholder = cameraFrame ? cameraFrame.querySelector(".placeholder") : null;
 
   const API_BASE = window.SB_API_BASE_URL || "http://localhost:8000/api/v1";
-  const FRAME_WINDOW = 15; // ~ buffer this many frames before sending to backend
+  const FRAME_WINDOW = 50; // buffer this many frames before sending to backend
   const TARGET_FPS = 15;
 
-  // FIXED: Expected dimensions for the model
+  // Expected dimensions for the model — MUST match backend/app/models/base_model.py's
+  // POSE_INPUT_DIM / FACE_INPUT_DIM exactly, which are themselves derived from legacy
+  // mp.solutions.holistic (no iris refinement): 33 pose landmarks, 468 face landmarks.
   const EXPECTED_POSE_DIM = 33 * 4;   // 132 (33 landmarks × 4 coords: x,y,z,visibility)
-  const EXPECTED_FACE_DIM = 478 * 3;  // 1434 (478 landmarks × 3 coords: x,y,z)
+  const EXPECTED_FACE_DIM = 468 * 3;  // 1404 (468 landmarks × 3 coords: x,y,z)
+  // NEVER 478 * 3 (1434) here — that landmark count only applies when MediaPipe's
+  // refineFaceLandmarks (iris refinement) is enabled, which this page does not use
+  // (see holistic.setOptions below: refineFaceLandmarks: false). Sending 1434-dim
+  // face vectors to a model trained on 1404-dim features silently misaligns every
+  // feature after landmark 468 and produces garbage predictions.
 
   let video, canvas, ctx, holistic, camera;
   let poseBuffer = [];
@@ -72,9 +79,10 @@
     return out.slice(0, EXPECTED_POSE_DIM);
   }
 
-  // FIXED: Flattens MediaPipe's face landmarks into a fixed-size vector
-  // Always returns exactly 1434 dimensions, padding with zeros if needed
-  // This is the critical fix for the dimension mismatch error
+  // Flattens MediaPipe's face landmarks into a fixed-size vector.
+  // Always returns exactly 1404 dimensions (EXPECTED_FACE_DIM), padding with
+  // zeros if needed — this must stay in lockstep with base_model.py's
+  // FACE_INPUT_DIM (468 landmarks × 3 coords), never 478 × 3 (1434).
   function flattenFace(landmarks) {
     const out = [];
     
@@ -92,14 +100,39 @@
       );
     });
     
-    // PAD with zeros if we got fewer landmarks than expected
-    // This handles the case where MediaPipe only detects 468 of 478 landmarks
+    // Pad with zeros if we got fewer landmarks than expected (e.g. MediaPipe
+    // only detected a subset of the usual 468 for this frame).
     while (out.length < EXPECTED_FACE_DIM) {
       out.push(0);
     }
     
     // Truncate if somehow we got more (shouldn't happen, but defensive)
     return out.slice(0, EXPECTED_FACE_DIM);
+  }
+
+  // Validates a pose/face payload against the model's feature contract
+  // before it ever leaves the browser. Returns null if valid, or a short
+  // reason string if not — callers should drop the payload rather than
+  // send it and let the backend guess.
+  function validatePayload(posePayload, facePayload) {
+    if (posePayload.length === 0 || facePayload.length === 0) {
+      return "empty pose/face buffer";
+    }
+    if (posePayload.length !== facePayload.length) {
+      return `pose/face frame count mismatch: ${posePayload.length} vs ${facePayload.length}`;
+    }
+    if (posePayload.length < FRAME_WINDOW) {
+      return `not enough frames buffered: ${posePayload.length} < ${FRAME_WINDOW}`;
+    }
+    for (let i = 0; i < posePayload.length; i++) {
+      if (posePayload[i].length !== EXPECTED_POSE_DIM) {
+        return `pose frame ${i} has ${posePayload[i].length} dims, expected ${EXPECTED_POSE_DIM}`;
+      }
+      if (facePayload[i].length !== EXPECTED_FACE_DIM) {
+        return `face frame ${i} has ${facePayload[i].length} dims, expected ${EXPECTED_FACE_DIM}`;
+      }
+    }
+    return null;
   }
 
   async function sendToBackend() {
@@ -110,11 +143,16 @@
     poseBuffer = [];
     faceBuffer = [];
 
-    // DEBUG: Log actual dimensions being sent
-    if (posePayload.length > 0 && facePayload.length > 0) {
-      console.log(
-        `Sending ${posePayload.length} frames: pose dim=${posePayload[0].length}, face dim=${facePayload[0].length}`
-      );
+    const validationError = validatePayload(posePayload, facePayload);
+    if (validationError) {
+      // Never send a malformed payload — flattenPose/flattenFace already
+      // pad/truncate to a fixed size, so this only fires on a genuine bug
+      // (e.g. a future refactor changing EXPECTED_*_DIM without updating
+      // the flatteners). Fail loudly in the console instead of sending
+      // shapes the model wasn't trained on and getting a confusing 500
+      // or silently garbled predictions back.
+      console.error(`SilentBridge: refusing to send invalid payload — ${validationError}`);
+      return;
     }
 
     const start = performance.now();

@@ -54,8 +54,12 @@ def decode_logits(logits: torch.Tensor) -> tuple[str, float]:
     This matches the CTC training objective in bridge_adapter.py's
     calibrate() and app/training/train_base_model.py — both use blank=0.
     Returns decoded text + mean top-token confidence.
-    Placeholder tokenizer: swap _id_to_token for the real vocab saved
-    alongside base_model.pt (base_model.vocab.json) once trained."""
+
+    Uses the real trained vocabulary saved alongside base_model.pt
+    (base_model.vocab.json, loaded into _id_to_token by _load_vocab() when
+    get_base_model() first runs). Falls back to raw "<id>" placeholders only
+    if no vocab file was found (e.g. a randomly-initialized model with no
+    training run behind it yet)."""
     probs = torch.softmax(logits, dim=-1)
     top_probs, top_ids = probs.max(dim=-1)  # (batch, frames)
     confidence = float(top_probs.mean().item())
@@ -67,7 +71,13 @@ def decode_logits(logits: torch.Tensor) -> tuple[str, float]:
     token_ids = [i for i in collapsed if i != CTC_BLANK_ID]
 
     tokens = [_id_to_token.get(i, f"<{i}>") for i in token_ids]
-    text = " ".join(tokens)
+    # SimpleCharTokenizer (app/training/isltranslate.py) is CHARACTER-level —
+    # its vocabulary already includes a literal " " (space) token. Joining
+    # with " ".join(tokens) would insert an EXTRA space between every single
+    # character (e.g. "hello" -> "h e l l o", and worse around real spaces),
+    # producing unreadable text even with a perfectly correct model and
+    # decode order. Concatenate the characters directly instead.
+    text = "".join(tokens)
     return text or "(no confident prediction)", confidence
 
 

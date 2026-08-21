@@ -116,16 +116,34 @@ class SilentBridgeBaseModel(nn.Module):
         return self.output_head(hidden)  # (batch, frames, vocab_size)
 
 
-def load_frozen_base_model(weights_path: str | None = None, **kwargs) -> SilentBridgeBaseModel:
-    """Instantiate the base model and freeze it. If weights_path is given and
-    exists, load pretrained weights; otherwise return a randomly initialized
-    model (useful for wiring up the API before training is done)."""
-    model = SilentBridgeBaseModel(**kwargs)
+def load_frozen_base_model(
+    weights_path: str | None = None,
+    **kwargs,
+) -> SilentBridgeBaseModel:
+    """Instantiate and freeze the base model.
+
+    When a checkpoint is provided, infer vocab_size from the checkpoint's
+    output head so the model architecture exactly matches the trained weights.
+    """
     if weights_path:
         import os
+
         if os.path.exists(weights_path):
             state = torch.load(weights_path, map_location="cpu")
+
+            # Infer the vocabulary size used during training.
+            output_head_weight = state.get("output_head.weight")
+            if output_head_weight is not None:
+                vocab_size = int(output_head_weight.shape[0])
+                kwargs["vocab_size"] = vocab_size
+
+            model = SilentBridgeBaseModel(**kwargs)
             model.load_state_dict(state)
+        else:
+            model = SilentBridgeBaseModel(**kwargs)
+    else:
+        model = SilentBridgeBaseModel(**kwargs)
+
     model.freeze()
     model.eval()
     return model
